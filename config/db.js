@@ -3,9 +3,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+    await mongoose.connect('mongodb://localhost:27017/socialapp', {
       // Aquí puedes tener más opciones de configuración
     });
     console.log('Conectado a MongoDB');
