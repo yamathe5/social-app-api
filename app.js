@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
-const userRoutes = require('./routes/userRoutes'); // Asegúrate de que la ruta sea correcta
-const postRoutes = require('./routes/postRoutes'); // Asegúrate de que la ruta sea correcta
-const commentRoutes = require('./routes/commentRoutes'); // Asegúrate de que la ruta sea correcta
+const userRoutes = require('./routes/userRoutes');
+const postRoutes = require('./routes/postRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 const app = express();
 const port = 3000;
-const connectDB = require('./config/db'); // Asegúrate de que la ruta sea correcta
+const connectDB = require('./config/db');
 
 connectDB();
 
