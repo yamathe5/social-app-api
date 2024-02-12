@@ -8,17 +8,27 @@ const userController = {
   userSignup: async (req, res) => {
     try {
       const { username, email, password } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 12);
-
+      // const hashedPassword = await bcrypt.hash(password, 12);
+      // console.log(hashedPassword)
       const newUser = new User({
         username,
         email,
-        password: hashedPassword,
+        password,
       });
 
       const savedUser = await newUser.save();
 
-      res.status(201).json(savedUser);
+      res.status(201).json({
+        message: "Usuario creado exitosamente",
+        user: {
+          userId: savedUser._id,
+          username: savedUser.username,
+          email: savedUser.email,
+          profilePicture: savedUser.profilePicture,
+          posts: savedUser.posts,
+          token: jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" }),
+        },
+      });
     } catch (error) {
       res.status(500).json({ message: "Error al crear el usuario", error });
     }
@@ -33,16 +43,21 @@ const userController = {
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-
+      console.log(password, user.password);
       const isMatch = await bcrypt.compare(password, user.password);
-
+      console.log(isMatch);
       if (!isMatch) {
         return res.status(400).json({ message: "Contraseña incorrecta" });
       }
-
-      const token = jwt.sign({ id: user._id }, "secret", { expiresIn: "1h" });
-
-      res.status(200).json({ token, userId: user._id });
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      res.status(200).json({
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        posts: user.posts,
+        token: token,
+      });
     } catch (error) {
       res.status(500).json({ message: "Error al iniciar sesión", error });
     }
@@ -52,12 +67,12 @@ const userController = {
   getUserProfile: async (req, res) => {
     try {
       const { userId } = req.params;
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select("-password");
 
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-
+      const { password } = user;
       res.status(200).json(user);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener el perfil", error });
@@ -68,19 +83,42 @@ const userController = {
   updateUserProfile: async (req, res) => {
     try {
       const { userId } = req.params;
-      const { username, email, bio } = req.body;
+      const { username, email, bio, password,profilePicture } = req.body;
 
-      const user = await User.findByIdAndUpdate(
-        userId,
-        {
-          username,
-          email,
-          bio,
-        },
-        { new: true }
-      );
+      // Verificar la identidad del usuario aquí
+      // El 'userFromToken' debería ser extraído del JWT en un middleware previo
+      if (req.user.id !== userId) {
+        return res
+          .status(403)
+          .json({ message: "No autorizado para actualizar este perfil" });
+      }
 
-      res.status(200).json(user);
+      // Crear un objeto para las actualizaciones
+      let update = {};
+
+      // Si se proporcionaron campos, actualizarlos
+      if (username) update.username = username;
+      if (email) update.email = email;
+      if (bio) update.bio = bio;
+      if (profilePicture) update.profilePicture = profilePicture;
+      if (password) {
+        // Si se proporcionó una contraseña, hashea y actualiza la contraseña
+        update.password = await bcrypt.hash(password, 12);
+      }
+
+      // Actualizar el usuario en la base de datos
+      const user = await User.findByIdAndUpdate(userId, update, {
+        new: true,
+        runValidators: true,
+        // Configurar context 'query' para que las validaciones de 'unique' funcionen
+        context: "query",
+      }).select("-password");
+
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      res.status(200).json({message: "Usuario actualziado", user});
     } catch (error) {
       res.status(500).json({ message: "Error al actualizar el perfil", error });
     }
@@ -145,13 +183,15 @@ const userController = {
   getUserFollowers: async (req, res) => {
     try {
       const { userId } = req.params;
-      const user = await User.findById(userId).populate('followers');
+      const user = await User.findById(userId).populate("followers");
       if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
+        return res.status(404).json({ message: "Usuario no encontrado" });
       }
       res.status(200).json({ followers: user.followers });
     } catch (error) {
-      res.status(500).json({ message: 'Error al obtener los seguidores', error });
+      res
+        .status(500)
+        .json({ message: "Error al obtener los seguidores", error });
     }
   },
 
@@ -159,16 +199,16 @@ const userController = {
   getUserFollowing: async (req, res) => {
     try {
       const { userId } = req.params;
-      const user = await User.findById(userId).populate('following');
+      const user = await User.findById(userId).populate("following");
       if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
+        return res.status(404).json({ message: "Usuario no encontrado" });
       }
       res.status(200).json({ following: user.following });
     } catch (error) {
-      res.status(500).json({ message: 'Error al obtener los usuarios seguidos', error });
+      res
+        .status(500)
+        .json({ message: "Error al obtener los usuarios seguidos", error });
     }
   },
-}
+};
 module.exports = userController;
-
-
