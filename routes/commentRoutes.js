@@ -9,7 +9,7 @@ router.get('/posts/:postId/comments', commentController.getCommentsByPostId);
 router.post('/posts/:postId/comments', commentController.addCommentToPost);
 
 // Actualizar un comentario específico
-router.put('/comments/:commentId', commentController.updateComment);
+router.patch('/comments/:commentId', commentController.updateComment);
 
 // Eliminar un comentario específico
 router.delete('/comments/:commentId', commentController.deleteComment);
