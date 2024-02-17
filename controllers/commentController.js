@@ -1,14 +1,20 @@
-const Comment = require('../models/commentModel'); // Asegúrate de tener este modelo definido
+const Comment = require("../models/commentModel"); // Asegúrate de tener este modelo definido
+const Post = require("../models/postModel");
 
 const commentController = {
   // Obtener todos los comentarios de una publicación
   getCommentsByPostId: async (req, res) => {
     try {
       const { postId } = req.params;
-      const comments = await Comment.find({ post: postId });
+      const comments = await Comment.find({ post: postId }).populate(
+        "user",
+        "username"
+      );
       res.status(200).json(comments);
     } catch (error) {
-      res.status(500).json({ message: 'Error al obtener los comentarios', error });
+      res
+        .status(500)
+        .json({ message: "Error al obtener los comentarios", error });
     }
   },
 
@@ -24,11 +30,21 @@ const commentController = {
         text: text,
         // Añade aquí más campos según tu modelo
       });
-
       const savedComment = await newComment.save();
-      res.status(201).json(savedComment);
+
+      await Post.findByIdAndUpdate(
+        postId,
+        { $push: { comments: savedComment._id } }, // Usas $push para añadir el ID del comentario al array de comments
+        { new: true } // Opcional: retorna el documento actualizado
+      );
+
+      const populatedComment = await Comment.findById(
+        savedComment._id
+      ).populate("user", "_id username");
+
+      res.status(201).json(populatedComment);
     } catch (error) {
-      res.status(500).json({ message: 'Error al añadir el comentario', error });
+      res.status(500).json({ message: "Error al añadir el comentario", error });
     }
   },
 
@@ -45,12 +61,14 @@ const commentController = {
       );
 
       if (!updatedComment) {
-        return res.status(404).json({ message: 'Comentario no encontrado' });
+        return res.status(404).json({ message: "Comentario no encontrado" });
       }
 
       res.status(200).json(updatedComment);
     } catch (error) {
-      res.status(500).json({ message: 'Error al actualizar el comentario', error });
+      res
+        .status(500)
+        .json({ message: "Error al actualizar el comentario", error });
     }
   },
 
@@ -62,12 +80,14 @@ const commentController = {
       const deletedComment = await Comment.findByIdAndDelete(commentId);
 
       if (!deletedComment) {
-        return res.status(404).json({ message: 'Comentario no encontrado' });
+        return res.status(404).json({ message: "Comentario no encontrado" });
       }
 
-      res.status(200).json({ message: 'Comentario eliminado' });
+      res.status(200).json({ message: "Comentario eliminado" });
     } catch (error) {
-      res.status(500).json({ message: 'Error al eliminar el comentario', error });
+      res
+        .status(500)
+        .json({ message: "Error al eliminar el comentario", error });
     }
   },
 };
