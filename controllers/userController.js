@@ -21,12 +21,15 @@ const userController = {
       res.status(201).json({
         message: "Usuario creado exitosamente",
         user: {
-          userId: savedUser._id,
+          _id: savedUser._id,
           username: savedUser.username,
           email: savedUser.email,
+          bio: savedUser.bio,
           profilePicture: savedUser.profilePicture,
           posts: savedUser.posts,
-          token: jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" }),
+          token: jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, {
+            expiresIn: "7d",
+          }),
         },
       });
     } catch (error) {
@@ -49,9 +52,11 @@ const userController = {
       if (!isMatch) {
         return res.status(400).json({ message: "Contraseña incorrecta" });
       }
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
       res.status(200).json({
-        userId: user._id,
+        _id: user._id,
         username: user.username,
         email: user.email,
         profilePicture: user.profilePicture,
@@ -83,10 +88,11 @@ const userController = {
   updateUserProfile: async (req, res) => {
     try {
       const { userId } = req.params;
-      const { username, email, bio, password,profilePicture } = req.body;
+      const { username, email, bio, password, profilePicture } = req.body;
 
       // Verificar la identidad del usuario aquí
-      // El 'userFromToken' debería ser extraído del JWT en un middleware previo
+      // console.log("dx")
+      console.log(req.user);
       if (req.user.id !== userId) {
         return res
           .status(403)
@@ -118,7 +124,7 @@ const userController = {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
 
-      res.status(200).json({message: "Usuario actualziado", user});
+      res.status(200).json({ message: "Usuario actualziado", user });
     } catch (error) {
       res.status(500).json({ message: "Error al actualizar el perfil", error });
     }
