@@ -1,11 +1,12 @@
 const express = require('express');
 const postController = require('../controllers/postController');
+const { validarToken } = require('../middleware/webtokenvalidation');
 const router = express.Router();
 
 
 
 // Obtener todos los posts
-router.get('/posts', postController.getAllPosts);
+router.get('/posts',validarToken, postController.getAllPosts);
 
 // Obtener un post específico por su ID
 router.get('/posts/:id', postController.getPostById);
@@ -26,6 +27,11 @@ router.put('/posts/:id', postController.updatePostById);
 router.delete('/posts/:id', postController.deletePostById);
 
 
+// Dar "like" a una publicación
+router.patch('/posts/:id/like', postController.likePost);
+
+// Retirar "like" de una publicación
+router.patch('/posts/:id/unlike', postController.unlikePost);
 
 
 module.exports = router;
