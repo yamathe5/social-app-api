@@ -62,8 +62,30 @@ const postController = {
   getPostsByUserId: async (req, res) => {
     try {
       const { userId } = req.params;
-      const posts = await Post.find({ user: userId });
-      res.status(200).json(posts);
+      console.log(userId);
+      const posts = await Post.find({ user: userId })
+        .populate("user", "username email")
+        .populate({
+          path: "comments",
+          populate: {
+            path: "user",
+            select: "username",
+          },
+        }).lean();;
+
+
+        const postsWithLikeStatus = posts.map((post) => {
+          console.log(post)
+          const likesAsString = post.likes.map((like) => like.toString());
+  
+          const hasLiked = likesAsString.includes(userId);
+          // console.log(likesAsString, userId, hasLiked);
+  
+          return { ...post, hasLiked: hasLiked };
+        });
+
+      console.log(posts);
+      res.status(200).json(postsWithLikeStatus);
     } catch (error) {
       res
         .status(500)
