@@ -1,0 +1,35 @@
+node_modules/
+.env
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+logs
+results
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+dist/
+
+# Directorios de IDEs y editores
+.idea
+.vscode
+*.swp
+*.swo
+*.sublime-workspace
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# Directorio opcional para archivos generados en tiempo de ejecución
+/tmp
+
+# Archivos específicos de MongoDB que no se desean en el repositorio
+mongod.lock
