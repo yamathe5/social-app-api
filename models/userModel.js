@@ -24,18 +24,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
-  followers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  }],
-  following: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  }],
   posts: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Post',
   }],
+  followerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Asegúrate de que esto coincida exactamente con cómo definiste el modelo de usuario
+  },
+  followingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Igual aquí
+  },
+  
 }, { timestamps: true });
 
 // Middleware para cifrar la contraseña antes de guardar el usuario
