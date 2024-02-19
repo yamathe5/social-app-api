@@ -36,6 +36,7 @@ const postController = {
   // Obtener un post específico por su ID
   getPostById: async (req, res) => {
     try {
+      const userId = req.user.id; // Asumiendo que tienes el ID del usuario disponible aquí
       const { id } = req.params;
       const post = await Post.findById(id)
         .populate("user", "username email")
@@ -46,17 +47,30 @@ const postController = {
             select: "username",
           },
         })
-        .populate("likes", "username");
-
+        .populate("likes", "username")
+        .lean(); // `lean` para obtener un objeto JavaScript simple
+  
       if (!post) {
         return res.status(404).json({ message: "Post no encontrado" });
       }
-
-      res.status(200).json(post);
+  
+      console.log(post);
+      
+      // Convertir el arreglo de likes a un arreglo de strings para facilitar la comparación
+      const likesAsString = post.likes.map(like => like._id.toString());
+  
+      // Verificar si el usuario ha dado "like" al post
+      const hasLiked = likesAsString.includes(userId);
+  
+      // Agregar la propiedad hasLiked al objeto post
+      const postWithLikeStatus = { ...post, hasLiked };
+  
+      res.status(200).json(postWithLikeStatus);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener el post", error });
     }
   },
+  
 
   // Obtener todos los posts de un usuario específico
   getPostsByUserId: async (req, res) => {
@@ -71,18 +85,18 @@ const postController = {
             path: "user",
             select: "username",
           },
-        }).lean();;
+        })
+        .lean();
 
+      const postsWithLikeStatus = posts.map((post) => {
+        console.log(post);
+        const likesAsString = post.likes.map((like) => like.toString());
 
-        const postsWithLikeStatus = posts.map((post) => {
-          console.log(post)
-          const likesAsString = post.likes.map((like) => like.toString());
-  
-          const hasLiked = likesAsString.includes(userId);
-          // console.log(likesAsString, userId, hasLiked);
-  
-          return { ...post, hasLiked: hasLiked };
-        });
+        const hasLiked = likesAsString.includes(userId);
+        // console.log(likesAsString, userId, hasLiked);
+
+        return { ...post, hasLiked: hasLiked };
+      });
 
       console.log(posts);
       res.status(200).json(postsWithLikeStatus);
@@ -114,12 +128,13 @@ const postController = {
   // Crear un nuevo post
   createPost: async (req, res) => {
     try {
-      const { title, content, user } = req.body;
+      const { title, content, user, image } = req.body;
 
       const newPost = new Post({
         title,
         content,
         user,
+        image,
         likes: [],
         comments: [],
       });
