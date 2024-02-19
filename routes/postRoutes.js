@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/posts',validarToken, postController.getAllPosts);
 
 // Obtener un post específico por su ID
-router.get('/posts/:id', postController.getPostById);
+router.get('/posts/:id', validarToken,postController.getPostById);
 
 // Obtener todos los posts de un usuario específico
 router.get('/user/:userId/posts', postController.getPostsByUserId);
