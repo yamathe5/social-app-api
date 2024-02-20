@@ -8,8 +8,6 @@ const userController = {
   userSignup: async (req, res) => {
     try {
       const { username, email, password } = req.body;
-      // const hashedPassword = await bcrypt.hash(password, 12);
-      // console.log(hashedPassword)
       const newUser = new User({
         username,
         email,
@@ -46,9 +44,7 @@ const userController = {
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      console.log(password, user.password);
       const isMatch = await bcrypt.compare(password, user.password);
-      console.log(isMatch);
       if (!isMatch) {
         return res.status(400).json({ message: "Contraseña incorrecta" });
       }
@@ -91,8 +87,6 @@ const userController = {
       const { username, email, bio, password, profilePicture } = req.body;
 
       // Verificar la identidad del usuario aquí
-      // console.log("dx")
-      console.log(req.user);
       if (req.user.id !== userId) {
         return res
           .status(403)

@@ -15,7 +15,7 @@ const followSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
-); // `timestamps` añade automáticamente `createdAt` y `updatedAt`
+); 
 
 const Follow = mongoose.model("Follow", followSchema);
 

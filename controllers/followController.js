@@ -4,13 +4,12 @@ const Follow = require("../models/followModel"); // Asegúrate de haber creado e
 // Seguir a un usuario
 exports.followUser = async (req, res) => {
   const { userId } = req.params; // ID del usuario a seguir
-  const followerId = req.user.id; // ID del usuario que sigue (debes obtenerlo del token de autenticación)
+  const followerId = req.user.id; // ID del usuario que sigue
   try {
     // Verificar que el usuario no se siga a sí mismo
     if (userId === followerId.toString()) {
       return res.status(400).send("No puedes seguirte a ti mismo.");
     }
-    console.log(userId);
     // Verificar si el seguimiento ya existe
     const existingFollow = await Follow.findOne({
       followerId,
@@ -22,12 +21,10 @@ exports.followUser = async (req, res) => {
 
     // Crear el seguimiento
     const follow = new Follow({ followerId, followingId: userId });
-    console.log(follow, "follow");
     const resp = await follow.save();
-    console.log(res, "resp");
     res.status(201).send("Usuario seguido con éxito.");
   } catch (error) {
-    console.error(error.message); // Cambiado para obtener detalles específicos del error
+    console.error(error.message); 
 
     res.status(500).send("Error al seguir al usuario.");
   }

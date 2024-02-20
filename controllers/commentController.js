@@ -28,7 +28,6 @@ const commentController = {
         post: postId,
         user: userId,
         text: text,
-        // Añade aquí más campos según tu modelo
       });
       const savedComment = await newComment.save();
 

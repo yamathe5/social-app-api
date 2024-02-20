@@ -13,13 +13,10 @@ router.post("/login", userController.userLogin);
 router.get("/user/:userId", validarToken, userController.getUserProfile);
 
 // Actualizar perfil de usuario
-
-router.patch("/user/:userId",validarToken, userController.updateUserProfile);
+router.patch("/user/:userId", validarToken, userController.updateUserProfile);
 
 // Eliminar un usuario
-router.delete("/user/:userId",validarToken, userController.deleteUser);
-
-
+router.delete("/user/:userId", validarToken, userController.deleteUser);
 
 // Rutas adicionales relacionadas con usuarios, si las necesitas
 
