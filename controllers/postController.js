@@ -1,10 +1,10 @@
-const Post = require("../models/postModel"); // Asegúrate de tener este modelo definido
+const Post = require("../models/postModel");
+const generateSignedUrl = require("../utils/generateSignedUrl");
 
 const postController = {
   // Obtener todos los posts
   getAllPosts: async (req, res) => {
     try {
-      // console.log(req.user.id)
       const userId = req.user.id; // Asumiendo que tienes el ID del usuario disponible aquí
       const posts = await Post.find()
         .populate("user", "username email")
@@ -15,19 +15,28 @@ const postController = {
             select: "username",
           },
         })
+        .sort({ createdAt: -1 }) // Ordena por fecha de creación en orden descendente
         .lean(); // Usa .lean() para obtener un objeto JavaScript plano
-      // .populate("likes", "username")
 
-      const postsWithLikeStatus = posts.map((post) => {
-        const likesAsString = post.likes.map((like) => like.toString());
+      const postsWithSignedUrlsAndLikeStatus = await Promise.all(
+        posts.map(async (post) => {
+          const hasLiked = post.likes.map(String).includes(userId);
 
-        const hasLiked = likesAsString.includes(userId);
-        // console.log(likesAsString, userId, hasLiked);
+          // Si el post tiene una imagen, genera una URL firmada
+          let signedImageUrl;
+          if (post.image) {
+            signedImageUrl = await generateSignedUrl(post.image);
+          }
 
-        return { ...post, hasLiked: hasLiked };
-      });
+          return {
+            ...post,
+            hasLiked: hasLiked,
+            signedImageUrl: signedImageUrl || post.image, // Usa la URL firmada si está disponible
+          };
+        })
+      );
 
-      res.json(postsWithLikeStatus);
+      res.json(postsWithSignedUrlsAndLikeStatus);
     } catch (err) {
       res.status(500).json({ message: "Error al obtener los posts", err });
     }
@@ -49,34 +58,39 @@ const postController = {
         })
         .populate("likes", "username")
         .lean(); // `lean` para obtener un objeto JavaScript simple
-  
+
       if (!post) {
         return res.status(404).json({ message: "Post no encontrado" });
       }
-  
-      console.log(post);
-      
+
       // Convertir el arreglo de likes a un arreglo de strings para facilitar la comparación
-      const likesAsString = post.likes.map(like => like._id.toString());
-  
+      const likesAsString = post.likes.map((like) => like._id.toString());
+
       // Verificar si el usuario ha dado "like" al post
       const hasLiked = likesAsString.includes(userId);
-  
+
+      let signedImageUrl;
+      if (post.image) {
+        signedImageUrl = await generateSignedUrl(post.image);
+      }
+
       // Agregar la propiedad hasLiked al objeto post
-      const postWithLikeStatus = { ...post, hasLiked };
-  
+      const postWithLikeStatus = {
+        ...post,
+        hasLiked,
+        signedImageUrl: signedImageUrl || post.image,
+      };
+
       res.status(200).json(postWithLikeStatus);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener el post", error });
     }
   },
-  
 
   // Obtener todos los posts de un usuario específico
   getPostsByUserId: async (req, res) => {
     try {
       const { userId } = req.params;
-      console.log(userId);
       const posts = await Post.find({ user: userId })
         .populate("user", "username email")
         .populate({
@@ -86,20 +100,28 @@ const postController = {
             select: "username",
           },
         })
+        .sort({ createdAt: -1 }) // Ordena por fecha de creación en orden descendente
         .lean();
 
-      const postsWithLikeStatus = posts.map((post) => {
-        console.log(post);
-        const likesAsString = post.likes.map((like) => like.toString());
+      const postsWithSignedUrlsAndLikeStatus = await Promise.all(
+        posts.map(async (post) => {
+          const hasLiked = post.likes.map(String).includes(userId);
 
-        const hasLiked = likesAsString.includes(userId);
-        // console.log(likesAsString, userId, hasLiked);
+          // Si el post tiene una imagen, genera una URL firmada
+          let signedImageUrl;
+          if (post.image) {
+            signedImageUrl = await generateSignedUrl(post.image);
+          }
 
-        return { ...post, hasLiked: hasLiked };
-      });
+          return {
+            ...post,
+            hasLiked: hasLiked,
+            signedImageUrl: signedImageUrl || post.image, // Usa la URL firmada si está disponible
+          };
+        })
+      );
 
-      console.log(posts);
-      res.status(200).json(postsWithLikeStatus);
+      res.status(200).json(postsWithSignedUrlsAndLikeStatus);
     } catch (error) {
       res
         .status(500)
@@ -134,13 +156,27 @@ const postController = {
         title,
         content,
         user,
-        image,
+        image: res.locals.url,
         likes: [],
         comments: [],
       });
 
       const savedPost = await newPost.save();
-      res.status(201).json(savedPost);
+
+      // Convertir el documento a un objeto JavaScript plano
+      let postResponse = savedPost.toObject();
+
+      // Si el post tiene una imagen, genera una URL firmada
+      if (postResponse.image) {
+        const signedImageUrl = await generateSignedUrl(postResponse.image);
+        postResponse.signedImageUrl = signedImageUrl;
+      } else {
+        postResponse.signedImageUrl = ""; // O manejar de otra manera si no hay imagen
+      }
+
+      postResponse.hasLiked = false;
+
+      res.status(201).json(postResponse);
     } catch (error) {
       res.status(500).json({ message: "Error al crear el post", error });
     }
