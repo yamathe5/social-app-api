@@ -4,6 +4,16 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const userController = {
+  //Get all users
+  getAllUsers: async (req, res) => {
+    try {
+      const users = await User.find().select("-password");
+      res.status(200).json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Error al obtener los usuarios", error });
+    }
+  },
+
   // Registro de usuario
   userSignup: async (req, res) => {
     try {
@@ -133,81 +143,6 @@ const userController = {
       res.status(200).json({ message: "Usuario eliminado" });
     } catch (error) {
       res.status(500).json({ message: "Error al eliminar el usuario", error });
-    }
-  },
-
-  // Seguir a un usuario
-  followUser: async (req, res) => {
-    try {
-      const { userId } = req.params; // ID del usuario al que quieres seguir
-      const { currentUserId } = req.body; // Supongamos que obtienes el ID del usuario actual desde el cuerpo de la petición
-
-      const user = await User.findById(userId);
-      const currentUser = await User.findById(currentUserId);
-
-      if (!user.followers.includes(currentUserId)) {
-        await user.updateOne({ $push: { followers: currentUserId } });
-        await currentUser.updateOne({ $push: { following: userId } });
-        res.status(200).json({ message: "Usuario seguido" });
-      } else {
-        res.status(403).json({ message: "Ya sigues a este usuario" });
-      }
-    } catch (error) {
-      res.status(500).json({ message: "Error al seguir al usuario", error });
-    }
-  },
-
-  // Dejar de seguir a un usuario
-  unfollowUser: async (req, res) => {
-    try {
-      const { userId } = req.params; // ID del usuario al que quieres dejar de seguir
-      const { currentUserId } = req.body; // ID del usuario actual
-
-      const user = await User.findById(userId);
-      const currentUser = await User.findById(currentUserId);
-
-      if (user.followers.includes(currentUserId)) {
-        await user.updateOne({ $pull: { followers: currentUserId } });
-        await currentUser.updateOne({ $pull: { following: userId } });
-        res.status(200).json({ message: "Has dejado de seguir al usuario" });
-      } else {
-        res.status(403).json({ message: "No sigues a este usuario" });
-      }
-    } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error al dejar de seguir al usuario", error });
-    }
-  },
-  // Obtener la lista de seguidores de un usuario
-  getUserFollowers: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const user = await User.findById(userId).populate("followers");
-      if (!user) {
-        return res.status(404).json({ message: "Usuario no encontrado" });
-      }
-      res.status(200).json({ followers: user.followers });
-    } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error al obtener los seguidores", error });
-    }
-  },
-
-  // Obtener la lista de usuarios seguidos por un usuario
-  getUserFollowing: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const user = await User.findById(userId).populate("following");
-      if (!user) {
-        return res.status(404).json({ message: "Usuario no encontrado" });
-      }
-      res.status(200).json({ following: user.following });
-    } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error al obtener los usuarios seguidos", error });
     }
   },
 };
