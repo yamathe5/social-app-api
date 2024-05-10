@@ -4,6 +4,8 @@ const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const followRoutes = require("./routes/followRoutes");
+const friendRequestRoutes = require("./routes/friendRequestRoutes");
+const friendshipRoutes = require("./routes/friendshipRoutes");
 
 const app = express();
 const port = 3000;
@@ -27,6 +29,8 @@ app.use('/api', userRoutes);
 app.use('/api', postRoutes);
 app.use('/api', commentRoutes);
 app.use("/api", followRoutes); // Ajusta la ruta base según tu preferencia
+app.use("/api", friendRequestRoutes); // Ajusta la ruta base según tu preferencia
+app.use("/api", friendshipRoutes); // Ajusta la ruta base según tu preferencia
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);

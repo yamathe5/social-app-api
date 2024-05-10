@@ -22,7 +22,7 @@ const createFakeData = async () => {
       const user = new User({
         username: faker.internet.userName(),
         email: faker.internet.email(),
-        password: "password",
+        password: "qweqwe",
       });
 
       await user.save();
@@ -99,7 +99,6 @@ const createFakeData = async () => {
       }
     }
 
-    console.log("Datos ficticios insertados");
     process.exit(0);
   } catch (error) {
     console.error(error);
