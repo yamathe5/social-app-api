@@ -1,4 +1,5 @@
 const Post = require("../models/postModel");
+const User = require("../models/userModel");
 const generateSignedUrl = require("../utils/generateSignedUrl");
 
 const postController = {
@@ -56,7 +57,7 @@ const postController = {
             select: "username",
           },
         })
-        .populate("likes", "username")
+        // .populate("likes", "username")
         .lean(); // `lean` para obtener un objeto JavaScript simple
 
       if (!post) {
@@ -150,47 +151,61 @@ const postController = {
   // Crear un nuevo post
   createPost: async (req, res) => {
     try {
-      const { title, content, user, image } = req.body;
+      const { content, user: userId, image } = req.body;
+
+      // Primero, validar y obtener información del usuario
+      const user = await User.findById(userId).select("username email");
+      if (!user) {
+          return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
 
       const newPost = new Post({
-        title,
         content,
-        user,
+        user: userId,
         image: res.locals.url,
         likes: [],
         comments: [],
       });
 
-      const savedPost = await newPost.save();
+    
+      
 
+      const savedPost = await newPost.save();
       // Convertir el documento a un objeto JavaScript plano
       let postResponse = savedPost.toObject();
-
+      postResponse.user = {
+        _id: user._id,
+        username: user.username,
+        email: user.email
+    };
       // Si el post tiene una imagen, genera una URL firmada
       if (postResponse.image) {
+        postResponse.signedImageUrl = ""; // O manejar de otra manera si no hay imagen
         const signedImageUrl = await generateSignedUrl(postResponse.image);
         postResponse.signedImageUrl = signedImageUrl;
       } else {
         postResponse.signedImageUrl = ""; // O manejar de otra manera si no hay imagen
       }
 
-      postResponse.hasLiked = false;
 
+      postResponse.hasLiked = false;
       res.status(201).json(postResponse);
     } catch (error) {
+      console.error("Error creating post:", error);
       res.status(500).json({ message: "Error al crear el post", error });
-    }
+  }
   },
 
   // Actualizar un post por su ID
   updatePostById: async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, content } = req.body;
+      const { content } = req.body;
 
       const updatedPost = await Post.findByIdAndUpdate(
         id,
-        { title, content },
+        { content },
         { new: true }
       );
 
@@ -223,12 +238,10 @@ const postController = {
   likePost: async (req, res) => {
     const postId = req.params.id;
     const userId = req.body.userId; // Asume que el ID del usuario se envía en el cuerpo de la solicitud
-
     try {
       const post = await Post.findById(postId);
-
       if (!post.likes.includes(userId)) {
-        await post.updateOne({ $push: { likes: userId } });
+        const newPost = await post.updateOne({ $push: { likes: userId } });
         res.status(200).json({ message: "El post ha sido likeado" });
       } else {
         res.status(400).json({ message: "Ya has dado like a este post" });
