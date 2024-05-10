@@ -8,6 +8,11 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 const uploadB2 = async (req, res, next) => {
+
+  if (!req.files || req.files.length === 0) {
+    return next();
+  }
+
   const b2 = new B2({
     applicationKeyId: process.env.KEY_ID,
     applicationKey: process.env.APP_KEY,
@@ -18,7 +23,6 @@ const uploadB2 = async (req, res, next) => {
 
   const response = await b2.getUploadUrl({ bucketId: process.env.BUCKET_ID });
   const { authorizationToken, uploadUrl } = response.data;
-
   const params = {
     uploadUrl,
     uploadAuthToken: authorizationToken,
