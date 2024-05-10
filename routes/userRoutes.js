@@ -3,10 +3,7 @@ const userController = require("../controllers/userController");
 const router = express.Router();
 const { validarToken } = require("../middleware/webtokenvalidation");
 //
-
-//
 router.get("/users",  userController.getAllUsers);
-
 // Registrarse como nuevo usuario
 router.post("/signup", userController.userSignup);
 
