@@ -2,10 +2,7 @@ const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: [true, "El título es obligatorio"],
-    },
+    
     content: {
       type: String,
       required: [true, "El contenido es obligatorio"],
